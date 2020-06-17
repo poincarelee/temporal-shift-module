@@ -1,0 +1,27 @@
+运行online_demo时遇到的问题：
+1. bilinear_sample_nchw could not import
+   这个问题可以用过将编译incubator-tvm后build文件夹下生成的libtvm_topi.so复制到anaconda虚拟环境下python的tvm-0.6.0-py3.7-linux-x86_64.egg中的
+   tvm文件夹下即可解决
+2.  “unsupported export of dynamic inputs, dynamic slice is a deprecated experimental op, 
+    please statically allocate or change to a higher version  ”
+    这是因为导出onnx格式时默认的是opset9，而TVM不太支持opset9中的一些op操作，所以最好是导出高一些的版本，opset10就可以。
+    torch.onnx.export(torch_module, torch_inputs, buffer, input_names=input_names, output_names=["o" + str(i) for i in range(len(torch_inputs))], opset_version=10)
+3. 此时仍然报错，采用一个工具 onnx-simplifier
+   安装
+      Pip  install onnx-simplifier
+   导入使用
+     from onnxsim import simplify
+     onnx_model, _ = simplify(onnx_model)
+     relay_module, params = tvm.relay.frontend.from_onnx(onnx_model, shape=input_shapes)
+4. Segmentation fault (core dumped) 或者在pycharm中Process finished with exit code 139 (interrupted by signal 11: SIGSEGV)
+   在import torch之前import onnx
+以上4条问题解决之后，online-demo能正常运行
+使用环境：
+Pytorch=1.4.0
+Torchvision=0.5.0
+Onnx=1.7.0
+Onnx-simplifier=0.2.9
+Opencv=4.2.0.34
+Incubator-tvm采用的是0.6版本，从github上下载：
+git clone -b v0.6 https://github.com/apache/incubator-tvm.git
+除tvm外，其余包都是pip或者conda install即可。
